@@ -3,12 +3,12 @@ services:
 
   frontend:
     container_name: frontend
-    image: azer777/react:0.1
+    image: ilyailyukou/frontend:0.1
     ports:
       - '3000:80'
 
   api:
-    image: ilyukou/api:0.1
+    image: ilyailyukou/api:0.1
     container_name: api
     command: -timeout 60s
     ports:
@@ -20,20 +20,6 @@ services:
       - mysql
       - elasticsearch
       - activemq
-
-#  async_handler:
-#    image: ilyukou/async_handler:0.1.4
-#    container_name: async_handler
-#    command: -timeout 60s
-#    ports:
-#      - "8081:8081"
-#    environment:
-#      TZ: Europe/Minsk
-#    restart: always
-#    depends_on:
-#      - mysql
-#      - elasticsearch
-#      - activemq
 
   mysql:
     image: mysql:8.0.21
@@ -81,3 +67,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
+  resource:
+    image: minio/minio
+    container_name: resource
+    command: server /data
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ROOT_USER : aws_s3_access_key
+      MINIO_ROOT_PASSWORD : aws_s3_secret_key
+    restart: always
