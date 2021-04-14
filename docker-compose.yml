@@ -2,24 +2,22 @@ version: '2.2'
 services:
 
   frontend:
-    container_name: frontend
     image: ilyailyukou/frontend:0.1
+    container_name: frontend
     ports:
-      - '3000:80'
+        - '3000:3000'
+        - '3001:3001'
 
-  api:
-    image: ilyailyukou/api:0.1
-    container_name: api
-    command: -timeout 60s
+  resource:
+    image: minio/minio
+    container_name: resource
+    command: server /data
     ports:
-      - "8080:8080"
+      - "9000:9000"
     environment:
-      TZ: Europe/Minsk
+      MINIO_ROOT_USER : aws_s3_access_key
+      MINIO_ROOT_PASSWORD : aws_s3_secret_key
     restart: always
-    depends_on:
-      - mysql
-      - elasticsearch
-      - activemq
 
   mysql:
     image: mysql:8.0.21
@@ -44,11 +42,13 @@ services:
     image: elasticsearch:7.9.2
     container_name: elasticsearch
     ports:
-        - "9200:9200"
-        - "9300:9300"
+      - "9200:9200"
+      - "9300:9300"
     restart: always
     environment:
       discovery.type: single-node
+      transport.host: 0.0.0.0
+      cluster.name: elasticsearch
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9200" ]
       interval: 30s
@@ -59,7 +59,7 @@ services:
     image: rmohr/activemq:5.15.6
     container_name: activemq
     ports:
-      - "61617:61617"
+      - "61616:61616"
       - "8162:8162"
     restart: always
     healthcheck:
@@ -68,13 +68,20 @@ services:
       timeout: 10s
       retries: 5
 
-  resource:
-    image: minio/minio
-    container_name: resource
-    command: server /data
+  api:
+    image: ilyailyukou/api:0.1
+    container_name: api
+    command: -timeout 60s
     ports:
-      - "9000:9000"
+      - "8080:8080"
     environment:
-      MINIO_ROOT_USER : aws_s3_access_key
-      MINIO_ROOT_PASSWORD : aws_s3_secret_key
+      TZ: Atlantic/Reykjavik # UTC
+    #        SPRING_APPLICATION_JSON: '{
+    #              "spring.datasource.url": "jdbc:mysql://db:3306/table",
+    #            }'
     restart: always
+    depends_on:
+      - mysql
+      - elasticsearch
+      - activemq
+      - resource
